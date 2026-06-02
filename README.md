@@ -3,6 +3,12 @@
 
 Sales Dashboard built-in Python and the Streamlit library to visualize Excel data.
 
+> **Looking for the React version?** There's now a browser-based **React + Vite**
+> dashboard in [`web/`](./web) with the same KPIs, filters, month-over-month
+> trend, and PDF export — deployable as a static site to Vercel/Netlify/GitHub
+> Pages. See [`web/README.md`](./web/README.md).
+
+
 ## Video Tutorial
 [![YouTube Video](https://img.youtube.com/vi/Sb0A9i6d320/0.jpg)](https://youtu.be/Sb0A9i6d320)
 
