@@ -5,48 +5,36 @@ import {
   uniqueValues,
   applyFilters,
   kpis,
-  salesByProductLine,
-  salesByHour,
+  spendByPlatform,
+  spendByCategory,
+  topBrands,
   monthlyTrend,
 } from "./lib/aggregations.js";
 import { exportElementToPdf } from "./lib/exportPdf.js";
+import { usdFull } from "./lib/format.js";
 import Sidebar from "./components/Sidebar.jsx";
 import Kpis from "./components/Kpis.jsx";
 import Charts from "./components/Charts.jsx";
 
-function dateBounds(rows) {
-  const dates = rows.map((r) => r.dateObj).filter(Boolean);
-  if (!dates.length) return { minDate: null, maxDate: null };
-  return {
-    minDate: new Date(Math.min(...dates)),
-    maxDate: new Date(Math.max(...dates)),
-  };
-}
-
-function initialFilters(rows) {
-  const { minDate, maxDate } = dateBounds(rows);
-  return {
-    cities: [],
-    customerTypes: [],
-    genders: [],
-    minDate,
-    maxDate,
-    dateStart: minDate,
-    dateEnd: maxDate,
-  };
-}
+const emptyFilters = {
+  fiscalYears: [],
+  platforms: [],
+  categories: [],
+  brands: [],
+  regions: [],
+};
 
 export default function App() {
   const [rows, setRows] = useState(() => shapeRows(sampleData));
   const [sourceLabel, setSourceLabel] = useState("sample data");
   const [error, setError] = useState("");
-  const [filters, setFilters] = useState(() => initialFilters(shapeRows(sampleData)));
+  const [filters, setFilters] = useState(emptyFilters);
   const mainRef = useRef(null);
 
   const loadRows = (newRows, label) => {
     setRows(newRows);
     setSourceLabel(label);
-    setFilters(initialFilters(newRows));
+    setFilters(emptyFilters);
     setError("");
   };
 
@@ -74,24 +62,26 @@ export default function App() {
   };
 
   const handleReset = () => loadRows(shapeRows(sampleData), "sample data");
-
   const handleExportPdf = () => {
     if (mainRef.current) exportElementToPdf(mainRef.current);
   };
 
   const options = useMemo(
     () => ({
-      cities: uniqueValues(rows, "City"),
-      customerTypes: uniqueValues(rows, "Customer_type"),
-      genders: uniqueValues(rows, "Gender"),
+      fiscalYears: uniqueValues(rows, "fiscalYear"),
+      platforms: uniqueValues(rows, "platform"),
+      categories: uniqueValues(rows, "category"),
+      brands: uniqueValues(rows, "brand"),
+      regions: uniqueValues(rows, "region"),
     }),
     [rows]
   );
 
   const filtered = useMemo(() => applyFilters(rows, filters), [rows, filters]);
   const kpiData = useMemo(() => kpis(filtered), [filtered]);
-  const byHour = useMemo(() => salesByHour(filtered), [filtered]);
-  const byProductLine = useMemo(() => salesByProductLine(filtered), [filtered]);
+  const byPlatform = useMemo(() => spendByPlatform(filtered), [filtered]);
+  const byCategory = useMemo(() => spendByCategory(filtered), [filtered]);
+  const topBrandList = useMemo(() => topBrands(filtered), [filtered]);
   const monthly = useMemo(() => monthlyTrend(filtered), [filtered]);
 
   const latest = monthly.length ? monthly[monthly.length - 1] : null;
@@ -111,7 +101,7 @@ export default function App() {
       />
 
       <main className="main" ref={mainRef}>
-        <h1 className="page-title">📊 Sales Dashboard</h1>
+        <h1 className="page-title">📈 Marketing Performance Dashboard</h1>
 
         {filtered.length === 0 ? (
           <p className="warning">No data available based on the current filter settings.</p>
@@ -122,18 +112,21 @@ export default function App() {
             {latest && latest.change != null && (
               <div className="trend-metric">
                 <span className="trend-label">
-                  Sales change vs. previous month ({latest.month})
+                  Spend change vs. previous month ({latest.label})
                 </span>
-                <span className="trend-value">
-                  US $ {latest.total.toLocaleString("en-US")}
-                </span>
+                <span className="trend-value">{usdFull(latest.spend)}</span>
                 <span className={"trend-delta " + (latest.change >= 0 ? "up" : "down")}>
                   {latest.change >= 0 ? "▲" : "▼"} {Math.abs(latest.change).toFixed(1)}%
                 </span>
               </div>
             )}
 
-            <Charts byHour={byHour} byProductLine={byProductLine} monthly={monthly} />
+            <Charts
+              byPlatform={byPlatform}
+              byCategory={byCategory}
+              topBrandList={topBrandList}
+              monthly={monthly}
+            />
           </>
         )}
       </main>

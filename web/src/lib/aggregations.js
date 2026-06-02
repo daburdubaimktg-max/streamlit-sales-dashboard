@@ -1,4 +1,5 @@
-// Pure helpers that turn a list of rows into the numbers the charts need.
+// Pure helpers that turn a list of marketing rows into the numbers the
+// charts and KPIs need.
 
 const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
@@ -7,60 +8,74 @@ export function uniqueValues(rows, key) {
 }
 
 export function applyFilters(rows, filters) {
-  const { cities, customerTypes, genders, dateStart, dateEnd } = filters;
-  return rows.filter((r) => {
-    if (cities.length && !cities.includes(r.City)) return false;
-    if (customerTypes.length && !customerTypes.includes(r.Customer_type)) return false;
-    if (genders.length && !genders.includes(r.Gender)) return false;
-    if (dateStart && r.dateObj && r.dateObj < dateStart) return false;
-    if (dateEnd && r.dateObj && r.dateObj > dateEnd) return false;
-    return true;
-  });
+  const { fiscalYears, platforms, categories, brands, regions } = filters;
+  const ok = (sel, v) => sel.length === 0 || sel.includes(v);
+  return rows.filter(
+    (r) =>
+      ok(fiscalYears, r.fiscalYear) &&
+      ok(platforms, r.platform) &&
+      ok(categories, r.category) &&
+      ok(brands, r.brand) &&
+      ok(regions, r.region)
+  );
 }
 
 export function kpis(rows) {
-  if (!rows.length) {
-    return { totalSales: 0, averageRating: 0, averageSale: 0 };
-  }
-  const totals = rows.map((r) => r.Total);
-  const ratings = rows.map((r) => r.Rating).filter((v) => !Number.isNaN(v));
+  const spend = sum(rows.map((r) => r.spend));
+  const impressions = sum(rows.map((r) => r.impressions));
+  const reach = sum(rows.map((r) => r.reach));
+  const clicks = sum(rows.map((r) => r.clicks));
+  const videoViews = sum(rows.map((r) => r.videoViews));
   return {
-    totalSales: Math.round(sum(totals)),
-    averageRating: ratings.length ? sum(ratings) / ratings.length : 0,
-    averageSale: sum(totals) / rows.length,
+    spend,
+    impressions,
+    reach,
+    clicks,
+    videoViews,
+    ctr: impressions ? clicks / impressions : 0,
   };
 }
 
-function groupSum(rows, key) {
+function groupSum(rows, key, valueKey = "spend") {
   const map = new Map();
   for (const r of rows) {
     if (r[key] == null) continue;
-    map.set(r[key], (map.get(r[key]) || 0) + r.Total);
+    map.set(r[key], (map.get(r[key]) || 0) + r[valueKey]);
   }
   return map;
 }
 
-export function salesByProductLine(rows) {
-  const map = groupSum(rows, "Product line");
+// Sorted descending by value; capped to `limit` entries.
+function topN(map, limit) {
   return [...map.entries()]
-    .map(([name, total]) => ({ name, total: Math.round(total) }))
-    .sort((a, b) => a.total - b.total);
+    .map(([name, value]) => ({ name, value: Math.round(value) }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit);
 }
 
-export function salesByHour(rows) {
-  const map = groupSum(rows, "hour");
-  return [...map.entries()]
-    .map(([hour, total]) => ({ hour: Number(hour), total: Math.round(total) }))
-    .sort((a, b) => a.hour - b.hour);
-}
+export const spendByPlatform = (rows) => topN(groupSum(rows, "platform"), 20);
+export const spendByCategory = (rows) => topN(groupSum(rows, "category"), 20);
+export const topBrands = (rows) => topN(groupSum(rows, "brand"), 10);
 
-// Month-over-month totals, sorted chronologically, with % change vs prior month.
+export const impressionsByPlatform = (rows) =>
+  topN(groupSum(rows, "platform", "impressions"), 20);
+
+// Monthly spend trend, chronological, with % change vs the previous month.
 export function monthlyTrend(rows) {
-  const map = groupSum(rows, "monthKey");
+  const map = new Map();
+  for (const r of rows) {
+    if (!r.monthKey) continue;
+    map.set(r.monthKey, (map.get(r.monthKey) || 0) + r.spend);
+  }
   const sorted = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  return sorted.map(([month, total], i) => {
+  return sorted.map(([monthKey, spend], i) => {
     const prev = i > 0 ? sorted[i - 1][1] : null;
-    const change = prev ? ((total - prev) / prev) * 100 : null;
-    return { month, total: Math.round(total), change };
+    const change = prev ? ((spend - prev) / prev) * 100 : null;
+    const [y, m] = monthKey.split("-");
+    const label = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-US", {
+      month: "short",
+      year: "2-digit",
+    });
+    return { monthKey, label, spend: Math.round(spend), change };
   });
 }

@@ -1,24 +1,22 @@
-const usd = (n) =>
-  "US $ " + Math.round(n).toLocaleString("en-US");
+import { usd, compact, pct } from "../lib/format.js";
 
 export default function Kpis({ data }) {
-  const stars = "★".repeat(Math.round(data.averageRating));
+  const cards = [
+    { label: "Total Spend (USD)", value: usd(data.spend) },
+    { label: "Impressions", value: compact(data.impressions) },
+    { label: "Reach", value: compact(data.reach) },
+    { label: "Clicks", value: compact(data.clicks) },
+    { label: "Avg CTR", value: pct(data.ctr) },
+    { label: "Video Views", value: compact(data.videoViews) },
+  ];
   return (
     <div className="kpi-row">
-      <div className="kpi-card">
-        <div className="kpi-label">Total Sales</div>
-        <div className="kpi-value">{usd(data.totalSales)}</div>
-      </div>
-      <div className="kpi-card">
-        <div className="kpi-label">Average Rating</div>
-        <div className="kpi-value">
-          {data.averageRating.toFixed(1)} <span className="stars">{stars}</span>
+      {cards.map((c) => (
+        <div className="kpi-card" key={c.label}>
+          <div className="kpi-label">{c.label}</div>
+          <div className="kpi-value">{c.value}</div>
         </div>
-      </div>
-      <div className="kpi-card">
-        <div className="kpi-label">Average Sales / Transaction</div>
-        <div className="kpi-value">{usd(data.averageSale)}</div>
-      </div>
+      ))}
     </div>
   );
 }
