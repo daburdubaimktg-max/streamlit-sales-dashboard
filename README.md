@@ -15,7 +15,35 @@ streamlit run app.py
 ctrl-c
 ```
 
-## Live data from OneDrive/SharePoint
+## Connect your own data (no Azure setup needed)
+
+You don't need the Microsoft/Azure setup to use your own data. Pick whichever
+is easiest:
+
+### Option A — Drag & drop (zero config)
+Just run the app and use **"Upload your own data (Excel or CSV)"** in the
+sidebar. The dashboard updates instantly from your file. Great for quick,
+ad-hoc reports. Your file should have the same columns as the sample
+(City, Customer_type, Gender, Product line, Total, Rating, Date, Time, …).
+
+### Option B — Public link (auto-updating, no login)
+Set `PUBLIC_DATA_URL` in `.streamlit/secrets.toml` to a direct-download link:
+
+- **Google Sheets:** File → Share → **Publish to web** → choose the sheet →
+  **CSV** → copy the link. Anyone editing the sheet updates the dashboard.
+- **OneDrive/SharePoint share link:** create an "Anyone with the link" link,
+  then change the trailing `...?e=...` part: replace `:x:/g/` style view links
+  by appending `&download=1`, or use the "Embed" → download URL. (For locked-
+  down company files that can't be shared publicly, use the Graph option below.)
+
+### Management features
+- **Date-range filter** in the sidebar.
+- **Month-over-month sales trend** line chart, with the latest month's % change
+  shown as a headline metric.
+- **📄 Download PDF report** button in the sidebar — exports the KPIs and charts
+  as a clean PDF to email or print for management.
+
+## Live data from OneDrive/SharePoint (private company files)
 
 By default the app reads the bundled `supermarkt_sales.xlsx`. To make it
 **live** — so the dashboard updates whenever your team edits the Excel file in
