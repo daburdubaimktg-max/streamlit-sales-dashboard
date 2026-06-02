@@ -8,7 +8,14 @@ export function compact(n) {
   return v.toLocaleString("en-US");
 }
 
-export const usd = (n) => "$" + compact(n);
-export const usdFull = (n) =>
-  "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
+// Currency is AED throughout the dashboard.
+export const aed = (n) => "AED " + compact(n);
+export const aedFull = (n) =>
+  "AED " + Math.round(Number(n) || 0).toLocaleString("en-US");
 export const pct = (n) => (Number(n) * 100).toFixed(2) + "%";
+
+// Format a signed percentage change (e.g. +12.3% / -4.1%); null -> "—".
+export function delta(change) {
+  if (change == null || !isFinite(change)) return "—";
+  return (change >= 0 ? "+" : "") + change.toFixed(1) + "%";
+}

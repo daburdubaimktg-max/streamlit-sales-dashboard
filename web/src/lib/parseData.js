@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 
 // Raw column headers expected in the marketing tracker. Uploaded files should
 // use these same names (matching the master tracker layout).
-export const REQUIRED_COLUMNS = ["Platform", "Brand", "Spends (USD)", "Impressions"];
+export const REQUIRED_COLUMNS = ["Platform", "Brand", "Spends (AED)", "Impressions"];
 
 const MONTHS = {
   january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
@@ -39,7 +39,8 @@ export function shapeRow(raw) {
     brand: r["Brand"],
     region: r["Region"],
     market: r["Market"],
-    spend: num(r["Spends (USD)"]),
+    spend: num(r["Spends (AED)"]), // primary currency = AED
+    spendUsd: num(r["Spends (USD)"]),
     impressions: num(r["Impressions"]),
     videoViews: num(r["Video Plays / Views"]),
     clicks: num(r["Link Clicks / Clicks"]),
