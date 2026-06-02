@@ -15,6 +15,65 @@ streamlit run app.py
 ctrl-c
 ```
 
+## Live data from OneDrive/SharePoint
+
+By default the app reads the bundled `supermarkt_sales.xlsx`. To make it
+**live** — so the dashboard updates whenever your team edits the Excel file in
+Microsoft 365 — connect it to OneDrive/SharePoint via the Microsoft Graph API.
+
+### 1. Register an app in Azure (one-time, done by an IT admin)
+1. Go to **Azure Portal → Microsoft Entra ID → App registrations → New registration**.
+2. Give it a name (e.g. "Sales Dashboard"), register it.
+3. Copy the **Application (client) ID** and **Directory (tenant) ID**.
+4. Under **Certificates & secrets → New client secret**, create a secret and
+   copy its **Value** (not the ID).
+5. Under **API permissions → Add a permission → Microsoft Graph →
+   Application permissions**, add **`Files.Read.All`** (or `Sites.Read.All`
+   for SharePoint), then click **Grant admin consent**.
+
+### 2. Get the Excel file's share link
+In OneDrive/SharePoint, open the file → **Share** → **Copy link**. Paste this
+into `EXCEL_SHARE_URL` below.
+
+### 3. Configure secrets
+Copy `.streamlit/secrets.toml.example` to `.streamlit/secrets.toml` and fill in
+the values from steps 1–2:
+
+```toml
+APP_PASSWORD      = "a-shared-password"   # viewers type this to open the dashboard
+MS_TENANT_ID      = "..."
+MS_CLIENT_ID      = "..."
+MS_CLIENT_SECRET  = "..."
+EXCEL_SHARE_URL   = "https://yourcompany-my.sharepoint.com/:x:/g/..."
+```
+
+`secrets.toml` is git-ignored — never commit real credentials.
+
+### 4. Updating the dashboard
+- Edit the Excel file in Microsoft 365 → the dashboard picks up changes within
+  ~5 minutes, or instantly when a viewer clicks **🔄 Refresh data** in the sidebar.
+
+## Private / internal hosting
+
+This dashboard is meant for **internal viewers only**. Two layers protect it:
+
+1. **Password gate** — set `APP_PASSWORD` in `secrets.toml`; viewers must enter
+   it to see any data. (Skipped automatically if left blank.)
+2. **Network/hosting** — host it where only your company can reach it.
+
+### Run it privately with Docker
+```bash
+docker build -t sales-dashboard .
+
+# Inject secrets at runtime (do NOT bake them into the image)
+docker run -p 8501:8501 \
+  -v "$(pwd)/.streamlit/secrets.toml:/app/.streamlit/secrets.toml:ro" \
+  sales-dashboard
+```
+Then expose port 8501 only on your internal network / VPN, or put it behind
+your company's reverse proxy or identity-aware proxy. The container already
+includes a health check on `/_stcore/health`.
+
 ## Demo
 Sales Dashboard: https://www.salesdashboard.pythonandvba.com/
 

@@ -5,31 +5,52 @@
 
 
 
-import pandas as pd  # pip install pandas openpyxl
 import plotly.express as px  # pip install plotly-express
 import streamlit as st  # pip install streamlit
+
+from data_loader import _config, load_sales_data
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 st.set_page_config(page_title="Sales Dashboard", page_icon=":bar_chart:", layout="wide")
 
-# ---- READ EXCEL ----
-@st.cache_data
-def get_data_from_excel():
-    df = pd.read_excel(
-        io="supermarkt_sales.xlsx",
-        engine="openpyxl",
-        sheet_name="Sales",
-        skiprows=3,
-        usecols="B:R",
-        nrows=1000,
-    )
-    # Add 'hour' column to dataframe
-    df["hour"] = pd.to_datetime(df["Time"], format="%H:%M:%S").dt.hour
-    return df
 
-df = get_data_from_excel()
+# ---- PRIVATE ACCESS (password gate) ----
+def check_password() -> bool:
+    """Gate the dashboard behind a shared password so only internal staff
+    can view it. Set APP_PASSWORD in secrets to enable. If no password is
+    configured, the gate is skipped (e.g. when the hosting itself is private).
+    """
+    expected = _config("APP_PASSWORD")
+    if not expected:
+        return True  # No password configured -> rely on private hosting.
+
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.title(":lock: Sales Dashboard")
+    entered = st.text_input("Enter the access password:", type="password")
+    if entered:
+        if entered == expected:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    return False
+
+
+if not check_password():
+    st.stop()
+
+
+# ---- LOAD DATA (live from OneDrive/SharePoint) ----
+df, data_source = load_sales_data()
 
 # ---- SIDEBAR ----
+if st.sidebar.button("🔄 Refresh data"):
+    st.cache_data.clear()
+    st.rerun()
+st.sidebar.caption(f"Data source: {data_source}")
+
 st.sidebar.header("Please Filter Here:")
 city = st.sidebar.multiselect(
     "Select the City:",
