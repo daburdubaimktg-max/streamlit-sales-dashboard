@@ -1,8 +1,6 @@
 import { useState } from "react";
 import CheckboxGroup from "./CheckboxGroup.jsx";
 
-const toInput = (d) => (d ? d.toISOString().slice(0, 10) : "");
-
 export default function Sidebar({
   sourceLabel,
   options,
@@ -15,12 +13,11 @@ export default function Sidebar({
   error,
 }) {
   const [url, setUrl] = useState("");
-
   const update = (patch) => setFilters({ ...filters, ...patch });
 
   return (
     <aside className="sidebar">
-      <h2 className="sidebar-title">📊 Sales Dashboard</h2>
+      <h2 className="sidebar-title">📈 Marketing Performance</h2>
 
       <section className="sidebar-section">
         <label className="filter-label">Data</label>
@@ -55,50 +52,35 @@ export default function Sidebar({
       </section>
 
       <section className="sidebar-section">
-        <label className="filter-label">Date range</label>
-        <div className="date-row">
-          <input
-            type="date"
-            className="text-input"
-            value={toInput(filters.dateStart)}
-            min={toInput(filters.minDate)}
-            max={toInput(filters.maxDate)}
-            onChange={(e) =>
-              update({ dateStart: e.target.value ? new Date(e.target.value) : null })
-            }
-          />
-          <span>to</span>
-          <input
-            type="date"
-            className="text-input"
-            value={toInput(filters.dateEnd)}
-            min={toInput(filters.minDate)}
-            max={toInput(filters.maxDate)}
-            onChange={(e) =>
-              update({ dateEnd: e.target.value ? new Date(e.target.value) : null })
-            }
-          />
-        </div>
-      </section>
-
-      <section className="sidebar-section">
         <CheckboxGroup
-          label="City"
-          options={options.cities}
-          selected={filters.cities}
-          onChange={(v) => update({ cities: v })}
+          label="Fiscal Year"
+          options={options.fiscalYears}
+          selected={filters.fiscalYears}
+          onChange={(v) => update({ fiscalYears: v })}
         />
         <CheckboxGroup
-          label="Customer type"
-          options={options.customerTypes}
-          selected={filters.customerTypes}
-          onChange={(v) => update({ customerTypes: v })}
+          label="Platform"
+          options={options.platforms}
+          selected={filters.platforms}
+          onChange={(v) => update({ platforms: v })}
         />
         <CheckboxGroup
-          label="Gender"
-          options={options.genders}
-          selected={filters.genders}
-          onChange={(v) => update({ genders: v })}
+          label="Category"
+          options={options.categories}
+          selected={filters.categories}
+          onChange={(v) => update({ categories: v })}
+        />
+        <CheckboxGroup
+          label="Region"
+          options={options.regions}
+          selected={filters.regions}
+          onChange={(v) => update({ regions: v })}
+        />
+        <CheckboxGroup
+          label="Brand"
+          options={options.brands}
+          selected={filters.brands}
+          onChange={(v) => update({ brands: v })}
         />
       </section>
 

@@ -1,49 +1,62 @@
 import * as XLSX from "xlsx";
 
-// Columns the dashboard needs to function. Uploaded files should use these
-// same header names (matching the sample sales dataset).
-export const REQUIRED_COLUMNS = [
-  "City",
-  "Customer_type",
-  "Gender",
-  "Product line",
-  "Total",
-  "Rating",
-];
+// Raw column headers expected in the marketing tracker. Uploaded files should
+// use these same names (matching the master tracker layout).
+export const REQUIRED_COLUMNS = ["Platform", "Brand", "Spends (USD)", "Impressions"];
 
-function toDate(value) {
-  if (value == null || value === "") return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  // Parse "YYYY-MM-DD" without timezone surprises.
-  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
+const MONTHS = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+};
+
+function monthNumber(value) {
+  if (!value) return null;
+  // Handle combined labels like "April/May" -> take the first month.
+  const first = String(value).split("/")[0].trim().toLowerCase();
+  return MONTHS[first] || null;
 }
 
-// Normalise a raw row: trim keys, coerce numbers, derive hour / month helpers.
+const num = (v) => {
+  if (v == null || v === "") return 0;
+  const n = Number(v);
+  return Number.isNaN(n) ? 0 : n;
+};
+
+// Map a raw spreadsheet row to clean internal keys used across the dashboard.
 export function shapeRow(raw) {
-  const o = {};
-  for (const k in raw) o[String(k).trim()] = raw[k];
+  const r = {};
+  for (const k in raw) r[String(k).trim()] = raw[k];
 
-  o.Total = Number(o.Total);
-  o.Rating = Number(o.Rating);
+  const o = {
+    fiscalYear: r["Fiscal Year"],
+    year: num(r["Year"]),
+    month: r["Month"],
+    quarter: r["Quarter"],
+    campaign: r["Campaign"],
+    platform: r["Platform"],
+    objective: r["Campaign Objective / KPI"],
+    category: r["Category"],
+    brand: r["Brand"],
+    region: r["Region"],
+    market: r["Market"],
+    spend: num(r["Spends (USD)"]),
+    impressions: num(r["Impressions"]),
+    videoViews: num(r["Video Plays / Views"]),
+    clicks: num(r["Link Clicks / Clicks"]),
+    ctr: num(r["CTR"]),
+    reach: num(r["Reach"]),
+  };
 
-  if (o.Time != null) {
-    const m = String(o.Time).match(/^(\d{1,2})/);
-    o.hour = m ? parseInt(m[1], 10) : null;
-  }
-
-  const d = toDate(o.Date);
-  if (d) {
-    o.dateObj = d;
-    o.monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const mn = monthNumber(o.month);
+  if (o.year && mn) {
+    o.monthNum = mn;
+    o.monthKey = `${o.year}-${String(mn).padStart(2, "0")}`;
   }
   return o;
 }
 
 export function shapeRows(rows) {
-  return rows.map(shapeRow).filter((r) => !Number.isNaN(r.Total));
+  return rows.map(shapeRow).filter((r) => r.platform != null);
 }
 
 function hasRequired(rows) {
@@ -53,24 +66,22 @@ function hasRequired(rows) {
 }
 
 // Parse an uploaded Excel/CSV ArrayBuffer into shaped rows. Tries several
-// header-row offsets so it works with both the structured sample workbook
-// (title rows on top) and plain exports.
+// header-row offsets so it works even if the sheet has title rows on top.
 export function parseWorkbook(arrayBuffer) {
   const wb = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
-  const sheetName = wb.SheetNames.includes("Sales")
-    ? "Sales"
-    : wb.SheetNames[0];
+  // Prefer the "Combined Data" sheet if present, else the first sheet.
+  const sheetName =
+    wb.SheetNames.find((s) => /combined data/i.test(s)) || wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
 
   for (let offset = 0; offset <= 6; offset++) {
     const rows = XLSX.utils.sheet_to_json(ws, { range: offset, defval: null });
-    const shaped = shapeRows(rows);
-    if (hasRequired(shaped)) return shaped;
+    if (hasRequired(rows)) return shapeRows(rows);
   }
 
   throw new Error(
     "Couldn't find the expected columns (" +
       REQUIRED_COLUMNS.join(", ") +
-      "). Please check your file's headers."
+      "). Please check that the file matches the marketing tracker layout."
   );
 }

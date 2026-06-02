@@ -9,14 +9,16 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { usd, compact } from "../lib/format.js";
 
 const ACCENT = "#0083B8";
+const ACCENT_2 = "#E694FF";
 const tooltipStyle = {
   backgroundColor: "#0E2A3F",
   border: "1px solid #0083B8",
   color: "#FFF",
 };
-const fmt = (n) => "US $ " + Number(n).toLocaleString("en-US");
+const usdTip = (v) => usd(v);
 
 function ChartCard({ title, children }) {
   return (
@@ -29,48 +31,54 @@ function ChartCard({ title, children }) {
   );
 }
 
-export default function Charts({ byHour, byProductLine, monthly }) {
+export default function Charts({ byPlatform, byCategory, topBrandList, monthly }) {
   return (
     <>
       <div className="chart-grid">
-        <ChartCard title="Sales by Hour">
-          <BarChart data={byHour}>
+        <ChartCard title="Spend by Platform (USD)">
+          <BarChart data={byPlatform}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" vertical={false} />
-            <XAxis dataKey="hour" stroke="#9fb6c6" />
-            <YAxis stroke="#9fb6c6" />
-            <Tooltip contentStyle={tooltipStyle} formatter={fmt} />
-            <Bar dataKey="total" fill={ACCENT} radius={[4, 4, 0, 0]} />
+            <XAxis dataKey="name" stroke="#9fb6c6" interval={0} angle={-25} textAnchor="end" height={60} />
+            <YAxis stroke="#9fb6c6" tickFormatter={compact} />
+            <Tooltip contentStyle={tooltipStyle} formatter={usdTip} />
+            <Bar dataKey="value" fill={ACCENT} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartCard>
 
-        <ChartCard title="Sales by Product Line">
-          <BarChart data={byProductLine} layout="vertical" margin={{ left: 40 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" horizontal={false} />
-            <XAxis type="number" stroke="#9fb6c6" />
-            <YAxis type="category" dataKey="name" stroke="#9fb6c6" width={120} />
-            <Tooltip contentStyle={tooltipStyle} formatter={fmt} />
-            <Bar dataKey="total" fill={ACCENT} radius={[0, 4, 4, 0]} />
+        <ChartCard title="Spend by Category (USD)">
+          <BarChart data={byCategory}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" vertical={false} />
+            <XAxis dataKey="name" stroke="#9fb6c6" interval={0} angle={-25} textAnchor="end" height={60} />
+            <YAxis stroke="#9fb6c6" tickFormatter={compact} />
+            <Tooltip contentStyle={tooltipStyle} formatter={usdTip} />
+            <Bar dataKey="value" fill={ACCENT} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartCard>
       </div>
 
-      {monthly.length > 1 && (
-        <ChartCard title="Month-over-Month Sales Trend">
-          <LineChart data={monthly}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" />
-            <XAxis dataKey="month" stroke="#9fb6c6" />
-            <YAxis stroke="#9fb6c6" />
-            <Tooltip contentStyle={tooltipStyle} formatter={fmt} />
-            <Line
-              type="monotone"
-              dataKey="total"
-              stroke="#E694FF"
-              strokeWidth={3}
-              dot={{ r: 4 }}
-            />
-          </LineChart>
+      <div className="chart-grid">
+        <ChartCard title="Top 10 Brands by Spend (USD)">
+          <BarChart data={topBrandList} layout="vertical" margin={{ left: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" horizontal={false} />
+            <XAxis type="number" stroke="#9fb6c6" tickFormatter={compact} />
+            <YAxis type="category" dataKey="name" stroke="#9fb6c6" width={130} />
+            <Tooltip contentStyle={tooltipStyle} formatter={usdTip} />
+            <Bar dataKey="value" fill={ACCENT} radius={[0, 4, 4, 0]} />
+          </BarChart>
         </ChartCard>
-      )}
+
+        {monthly.length > 1 && (
+          <ChartCard title="Monthly Spend Trend (USD)">
+            <LineChart data={monthly}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1c3a52" />
+              <XAxis dataKey="label" stroke="#9fb6c6" />
+              <YAxis stroke="#9fb6c6" tickFormatter={compact} />
+              <Tooltip contentStyle={tooltipStyle} formatter={usdTip} />
+              <Line type="monotone" dataKey="spend" stroke={ACCENT_2} strokeWidth={3} dot={{ r: 3 }} />
+            </LineChart>
+          </ChartCard>
+        )}
+      </div>
     </>
   );
 }
