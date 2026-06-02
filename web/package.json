@@ -1,0 +1,24 @@
+{
+  "name": "sales-dashboard-react",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interactive sales dashboard built with React. Upload Excel/CSV in the browser, view KPIs and charts, export a PDF for management.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.13.3",
+    "xlsx": "^0.18.5",
+    "jspdf": "^2.5.2",
+    "html2canvas": "^1.4.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
