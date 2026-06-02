@@ -15,6 +15,26 @@ streamlit run app.py
 ctrl-c
 ```
 
+## Deploy to Streamlit Community Cloud (free shareable link)
+
+1. Push this repo to your GitHub (already done).
+2. Go to **https://share.streamlit.io** and sign in with GitHub.
+3. Click **Create app → Deploy a public app from GitHub** and select:
+   - **Repository:** `daburdubaimktg-max/streamlit-sales-dashboard`
+   - **Branch:** the branch you want (e.g. `main` after merging the PR)
+   - **Main file path:** `app.py`
+4. (Optional) **Advanced settings → Python version:** 3.11.
+5. (Optional) **Advanced settings → Secrets:** paste the contents of
+   `.streamlit/secrets.toml.example` and fill in real values to enable the
+   password gate (`APP_PASSWORD`) and/or a live data source.
+6. Click **Deploy**. In a couple of minutes you get an
+   `https://<your-app>.streamlit.app` link to share.
+
+**Keep it internal:** in the app's **Settings → Sharing**, set it to "Only
+specific people can view" and add your colleagues' emails. Combine with
+`APP_PASSWORD` for a second layer.
+
+
 ## Connect your own data (no Azure setup needed)
 
 You don't need the Microsoft/Azure setup to use your own data. Pick whichever
